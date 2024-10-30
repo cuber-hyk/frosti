@@ -9,51 +9,104 @@ tags:
   - tag
 ---
 
-## 标题
+# 摩尔投票算法 和 N/K 推广
 
-Markdown 支持多级标题，使用 `#` 符号表示。一个 `#` 表示一级标题，两个 `#` 表示二级标题，以此类推。
+## 算法简介
 
-### 三级标题
+**博耶-摩尔多数投票算法**(英语：Boyer--Moore majority vote algorithm),中文常作**多数投票算法、摩尔投票算法**等，是一种用来寻找一组元素中占多数元素的**常数空间级**时间复杂度算法。
 
-这是一个三级标题。
+## 算法求解思路
 
-## 列表
+1. 创建一个数组来存储**候选数**和计数器(词频)，计数器初始化为 0。
+2. 然后对每个数进行遍历操作，在遍历到元素 x 的时候
+3. 如果对应的计数器为 0，则将 x 存储到对应的位置中去，并将计数器设置为 1。
+4. 否则，将 x 与存储的元素进行比较，然后**递增**计数器（**如果它们相等**）或**递减**计数器（**不相等**）。
+5. 在此过程结束时，如果数组中存在占多数的元素，则检验每个数是否满足条件
 
-### 无序列表
+## 代码实现
 
-- 项目一
-- 项目二
-- 项目三
+**注意:** 使用前提是存在多数元素,否则需要最后来检验
+[169. 多数元素](https://leetcode.cn/problems/majority-element/)
+求解k=2时,寻找一个元素$> \frac{n}{2}$,用两个变量表示即可,代码如下:
 
-### 有序列表
-
-1. 第一项
-2. 第二项
-3. 第三项
-
-## 格式化文本
-
-你可以使用**加粗**和*斜体*来格式化文本。
-
-**加粗示例**
-
-_斜体示例_
-
-~~删除线示例~~
-
-## 链接
-
-[这是一个链接](https://www.example.com)
-
-## 图片
-
-![这是一个示例图片](/image/image4.jpg)
-
-## 代码
-
-你可以在文档中插入代码片段：
-
-```python
-def hello_world():
-    print("Hello, world!")
+```cpp
+int majorityElement(vector<int>& nums) {
+        int candidate = -1;
+        int count = 0;
+        for(int num : nums){
+            if(num == candidate)count++;
+            else if(--count<0){
+                candidate = num;
+                count = 1;
+            }
+        }
+        cout << candidate;
+        return candidate;
+    }
 ```
+
+**$\frac{N}{K}$扩展:**
+
+[229. 多数元素 II](https://leetcode.cn/problems/majority-element-ii/)
+
+**思路:**
+
+1. 遍历每个数
+2. 若候选容器有该数,词频+1
+3. 若没有该数,且侯选容器没满(即词频为0),则添加该候选数
+4. 若没有该数,且候选容器满了,则每个候选数词频-1
+5. 检验剩余的候选数是否满足词频数$> \frac{n}{k}$
+
+```cpp
+vector<int> majorityElementCommon(vector<int> nums, int k){
+        int n = nums.size();
+        vector<vector<int>> candidate(k,vector<int>(2,0));
+
+        auto update = [&](int x){
+            for(int i=0;i<k-1;i++){
+                //发现candidate中有该数
+                if(x == candidate[i][0]){
+                    candidate[i][1]++;
+                    return;
+                }
+            }
+            //candidate中没有该数
+            for(int i=0;i<k-1;i++){
+                //candidate没有满
+                if(candidate[i][1]==0){
+                    candidate[i][0] = x;
+                    candidate[i][1] = 1;
+                    return;
+                }
+            }
+            //全部抵消
+            for(int i=0;i<k-1;i++){
+                candidate[i][1]--;
+            }
+            return;
+        };
+
+        for(int num : nums){
+            update(num);
+        }
+
+        auto check = [&](int x){
+            return ranges::count(nums,x)>n/k;
+        };
+        //剩余的数进行验证即可
+        vector<int> res;
+        for(int i=0;i<k-1;i++){
+            cout<<candidate[i][0] << " ";
+            if(candidate[i][1] && check(candidate[i][0])){
+                res.push_back(candidate[i][0]);
+            }
+        }
+        return res;
+    }
+```
+
+## 练习题
+
+[2780. 合法分割的最小下标](https://leetcode.cn/problems/minimum-index-of-a-valid-split/)
+
+[1157. 子数组中占绝大多数的元素](https://leetcode.cn/problems/online-majority-element-in-subarray/description/)
